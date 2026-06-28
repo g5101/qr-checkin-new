@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>ボランティア受付システム</title>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <style>
+        body { font-family: sans-serif; text-align: center; margin-top: 50px; }
+        #reader { width: 100%; max-width: 500px; margin: 0 auto; }
+        #result { margin-top: 20px; font-weight: bold; color: green; }
+    </style>
+</head>
+<body>
+    <h2>QRコード受付スキャナー</h2>
+    <div id="reader"></div>
+    <div id="result"></div>
+
+    <script>
+        // 【ここを書き換えてください！】
+        // ステップ1でコピーしたGASの「ウェブアプリのURL」を貼り付けてください
+        const GAS_URL = "https://script.google.com/macros/library/d/1CryyFmveAeeG8l8aFjN6-7HOEvILYipaWANV_UeNia1OaVLOBKIP3abD/2";
+
+        function onScanSuccess(decodedText) {
+            // 二重送信を防ぐために一度停止
+            html5QrcodeScanner.clear();
+            document.getElementById('result').innerText = "読み取り中...: " + decodedText;
+
+            // GASのdoGet関数に学籍番号を飛ばす（Fetch APIを使用）
+            // 記事にあった「GASはバックエンド」として使う形です
+            fetch(`${GAS_URL}?id=${decodedText}`, {
+                mode: 'no-cors' // これによりGAS側の制限を回避します
+            })
+            .then(() => {
+                document.getElementById('result').innerText = "受付完了！学籍番号: " + decodedText;
+                // 3秒後にスキャナーを再起動（次の人のために）
+                setTimeout(() => {
+                    location.reload();
+                }, 3000);
+            })
+            .catch(err => {
+                console.error(err);
+                alert("送信エラーが発生しました。");
+            });
+        }
+
+        // スキャナーの設定
+        const html5QrcodeScanner = new Html5QrcodeScanner(
+            "reader", { fps: 10, qrbox: 250 }
+        );
+        html5QrcodeScanner.render(onScanSuccess);
+    </script>
+</body>
+</html>
